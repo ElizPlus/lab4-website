@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:  # Ручной запуск
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Полная история для тегов
+        
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+      
+    - name: Create versioned deployment
+      run: |
+        # Создаем папку для сборки
+        mkdir -p _site
+        
+        # Копируем файлы в папку с версией
+        RELEASE_TAG=${GITHUB_REF#refs/tags/}
+        mkdir -p _site/v$RELEASE_TAG
+        cp -r ru en index.html _site/v$RELEASE_TAG/
+        
+        # Также копируем в корень для latest версии
+        cp -r ru en index.html _site/
+        
+        # Создаем индекс всех версий
+        echo "<h1>Доступные версии сайта</h1>" > _site/versions.html
+        echo "<ul>" >> _site/versions.html
+        git tag -l | while read tag; do
+          echo "<li><a href='/v$tag/'>Версия $tag</a></li>" >> _site/versions.html
+        done
+        echo "</ul>" >> _site/versions.html
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: _site
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2

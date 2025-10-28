@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website - English Version</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        nav { margin-bottom: 20px; }
+        a { margin-right: 15px; text-decoration: none; color: #0366d6; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/ru/">Russian</a>
+        <a href="/en/">English</a>
+    </nav>
+    
+    <h1>Welcome to the English version of the website! 🇺🇸</h1>
+    <p>This is a test website for CI/CD lab work.</p>
+    <p>Current version: <strong id="version">Loading...</strong></p>
+
+    <script>
+        // Get version from URL
+        const path = window.location.pathname;
+        const version = path.split('/')[2] || 'latest';
+        document.getElementById('version').textContent = version;
+    </script>
+</body>
+</html>

@@ -5,49 +5,63 @@ on:
     types: [published]
   workflow_dispatch:  # Ручной запуск
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Полная история для тегов
-        
-    - name: Setup Pages
-      uses: actions/configure-pages@v3
+      - name: Checkout
+        uses: actions/checkout@v4
       
-    - name: Create versioned deployment
-      run: |
-        # Создаем папку для сборки
-        mkdir -p _site
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
         
-        # Копируем файлы в папку с версией
-        RELEASE_TAG=${GITHUB_REF#refs/tags/}
-        mkdir -p _site/v$RELEASE_TAG
-        cp -r ru en index.html _site/v$RELEASE_TAG/
-        
-        # Также копируем в корень для latest версии
-        cp -r ru en index.html _site/
-        
-        # Создаем индекс всех версий
-        echo "<h1>Доступные версии сайта</h1>" > _site/versions.html
-        echo "<ul>" >> _site/versions.html
-        git tag -l | while read tag; do
-          echo "<li><a href='/v$tag/'>Версия $tag</a></li>" >> _site/versions.html
-        done
-        echo "</ul>" >> _site/versions.html
-        
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v2
-      with:
-        path: _site
-        
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v2
+      - name: Create versioned deployment
+        run: |
+          # Создаем папку для сборки
+          mkdir -p _site
+          
+          # Копируем файлы в папку с версией
+          RELEASE_TAG=${GITHUB_REF#refs/tags/}
+          echo "Building version: $RELEASE_TAG"
+          
+          mkdir -p _site/v$RELEASE_TAG
+          cp -r ru/ en/ index.html _site/v$RELEASE_TAG/
+          
+          # Также копируем в корень для latest версии
+          cp -r ru/ en/ index.html _site/
+          
+          # Создаем индекс всех версий
+          echo "<!DOCTYPE html>" > _site/versions.html
+          echo "<html><head><title>Доступные версии</title></head><body>" >> _site/versions.html
+          echo "<h1>Доступные версии сайта</h1>" >> _site/versions.html
+          echo "<ul>" >> _site/versions.html
+          echo "<li><a href='/'>Latest Version</a></li>" >> _site/versions.html
+          echo "<li><a href='/v$RELEASE_TAG/'>Version $RELEASE_TAG</a></li>" >> _site/versions.html
+          echo "</ul>" >> _site/versions.html
+          echo "</body></html>" >> _site/versions.html
+          
+          # Показываем что создали
+          echo "Created site structure:"
+          find _site -type f
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

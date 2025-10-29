@@ -69,7 +69,6 @@ jobs:
         echo "</ul>" >> _site/versions.html
         echo "</div>" >> _site/versions.html
         echo "<p><em>Все версии содержат актуальную версию контента, но доступны по разным URL</em></p>" >> _site/versions.html
-        echo "<p><strong>Примечание:</strong> Все ссылки включают имя репозитория <code>/lab4-website/</code></p>" >> _site/versions.html
         echo "</body></html>" >> _site/versions.html
         
         # Показываем итоговую структуру

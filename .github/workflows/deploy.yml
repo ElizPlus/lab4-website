@@ -35,25 +35,33 @@ jobs:
         # Определяем версию тега
         if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
           RELEASE_TAG=${GITHUB_REF#refs/tags/}
-          echo "Building versioned site: $RELEASE_TAG"
+          echo "🚀 Building versioned site: $RELEASE_TAG"
+          
+          # Убираем букву 'v' из имени папки
+          VERSION_NUMBER=${RELEASE_TAG#v}  # Убираем 'v' из начала
+          echo "📁 Creating folder: v$VERSION_NUMBER"
           
           # Создаем папку для этой версии
-          mkdir -p _site/v$RELEASE_TAG
+          mkdir -p _site/v$VERSION_NUMBER
           
           # Копируем все файлы в версионную папку
-          cp -r ru/ en/ index.html _site/v$RELEASE_TAG/
+          cp -r ru/ en/ index.html _site/v$VERSION_NUMBER/
           
           # Создаем страницу со списком версий
           echo "<!DOCTYPE html>" > _site/versions.html
           echo "<html><head><title>Available Versions</title></head><body>" >> _site/versions.html
-          echo "<h1>Available Website Versions</h1>" >> _site/versions.html
+          echo "<h1>🌐 Available Website Versions</h1>" >> _site/versions.html
           echo "<ul>" >> _site/versions.html
           echo "<li><a href='/'>Latest Version</a></li>" >> _site/versions.html
-          echo "<li><a href='/v$RELEASE_TAG/'>Version $RELEASE_TAG</a></li>" >> _site/versions.html
+          git tag -l | while read tag; do
+            VERSION=${tag#v}
+            echo "<li><a href='/v$VERSION/'>Version $tag</a></li>" >> _site/versions.html
+          done
           echo "</ul>" >> _site/versions.html
           echo "</body></html>" >> _site/versions.html
         else
-          echo "Building latest version only"
+          echo "📦 Building latest version only"
+        fi"Building latest version only"
         fi
         
         # Показываем что создали

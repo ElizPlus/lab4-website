@@ -53,22 +53,23 @@ jobs:
           fi
         done
         
-        # Создаем страницу со списком ВСЕХ версий
+        # Создаем страницу со списком ВСЕХ версий с ПРАВИЛЬНЫМИ ссылками
         echo "<!DOCTYPE html>" > _site/versions.html
-        echo "<html><head><title>All Website Versions</title><meta charset='UTF-8'><style>body{font-family:Arial;margin:40px}ul{list-style:none;padding:0}li{margin:15px 0}a{text-decoration:none;color:#0366d6;font-weight:bold}.version-list{background:#f5f5f5;padding:20px;border-radius:5px}</style></head><body>" >> _site/versions.html
+        echo "<html><head><title>All Website Versions</title><meta charset='UTF-8'><style>body{font-family:Arial;margin:40px}ul{list-style:none;padding:0}li{margin:15px 0}a{text-decoration:none;color:#0366d6;font-weight:bold}.version-list{background:#f5f5f5;padding:20px;border-radius:5px}code{background:#e9ecef;padding:2px 5px;border-radius:3px}</style></head><body>" >> _site/versions.html
         echo "<h1>Все доступные версии сайта</h1>" >> _site/versions.html
         echo "<div class='version-list'>" >> _site/versions.html
         echo "<ul>" >> _site/versions.html
-        echo "<li><a href='/'>Последняя версия (актуальная)</a></li>" >> _site/versions.html
+        echo "<li><a href='/lab4-website/'>Последняя версия (актуальная)</a></li>" >> _site/versions.html
         git tag -l | while read tag; do
           if [[ "$tag" == v* ]]; then
             VERSION=${tag#v}
-            echo "<li><a href='/v$VERSION/'>Версия $tag</a></li>" >> _site/versions.html
+            echo "<li><a href='/lab4-website/v$VERSION/'>Версия $tag</a> - <code>/lab4-website/v$VERSION/</code></li>" >> _site/versions.html
           fi
         done
         echo "</ul>" >> _site/versions.html
         echo "</div>" >> _site/versions.html
         echo "<p><em>Все версии содержат актуальную версию контента, но доступны по разным URL</em></p>" >> _site/versions.html
+        echo "<p><strong>Примечание:</strong> Все ссылки включают имя репозитория <code>/lab4-website/</code></p>" >> _site/versions.html
         echo "</body></html>" >> _site/versions.html
         
         # Показываем итоговую структуру

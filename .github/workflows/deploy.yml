@@ -19,12 +19,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Полная история для тегов
+        fetch-depth: 0  # Полная история для всех тегов
       
     - name: Setup Pages
       uses: actions/configure-pages@v4
       
-    - name: Build site with versions
+    - name: Build site with ALL versions
       run: |
         # Создаем основную папку
         mkdir -p _site
@@ -32,43 +32,47 @@ jobs:
         # Копируем файлы в корень (latest версия)
         cp -r ru/ en/ index.html _site/
         
-        # Определяем версию тега
-        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-          RELEASE_TAG=${GITHUB_REF#refs/tags/}
-          echo "Building versioned site: $RELEASE_TAG"
-          
-          # Убираем букву 'v' из имени папки
-          VERSION_NUMBER=${RELEASE_TAG#v}  # Убираем 'v' из начала
-          echo "Creating folder: v$VERSION_NUMBER"
-          
-          # Создаем папку для этой версии
-          mkdir -p _site/v$VERSION_NUMBER
-          
-          # Копируем все файлы в версионную папку
-          cp -r ru/ en/ index.html _site/v$VERSION_NUMBER/
-          
-          # Создаем страницу со списком версий
-          echo "<!DOCTYPE html>" > _site/versions.html
-          echo "<html><head><title>Available Versions</title></head><body>" >> _site/versions.html
-          echo "<h1>Available Website Versions</h1>" >> _site/versions.html
-          echo "<ul>" >> _site/versions.html
-          echo "<li><a href='/'>Latest Version</a></li>" >> _site/versions.html
-          git tag -l | while read tag; do
+        # СОЗДАЕМ ВСЕ ВЕРСИИ ИЗ ВСЕХ ТЕГОВ
+        echo "Creating versions for all tags..."
+        git tag -l | while read tag; do
+          if [[ "$tag" == v* ]]; then
+            VERSION_NUMBER=${tag#v}
+            echo "Creating version: $VERSION_NUMBER from tag: $tag"
+            
+            # Переключаемся на этот тег
+            git checkout $tag
+            
+            # Создаем папку для этой версии
+            mkdir -p _site/v$VERSION_NUMBER
+            
+            # Копируем файлы из этой версии
+            cp -r ru/ en/ index.html _site/v$VERSION_NUMBER/
+            
+            echo "Version $VERSION_NUMBER created"
+          fi
+        done
+        
+        # Возвращаемся к исходному состоянию
+        git checkout ${{ github.ref }}
+        
+        # Создаем страницу со списком ВСЕХ версий
+        echo "<!DOCTYPE html>" > _site/versions.html
+        echo "<html><head><title>All Website Versions</title><style>body{font-family:Arial;margin:40px}ul{list-style:none;padding:0}li{margin:10px 0}a{text-decoration:none;color:#0366d6}</style></head><body>" >> _site/versions.html
+        echo "<h1>All Available Website Versions</h1>" >> _site/versions.html
+        echo "<ul>" >> _site/versions.html
+        echo "<li><a href='/'>Latest Version (main)</a></li>" >> _site/versions.html
+        git tag -l | while read tag; do
+          if [[ "$tag" == v* ]]; then
             VERSION=${tag#v}
             echo "<li><a href='/v$VERSION/'>Version $tag</a></li>" >> _site/versions.html
-          done
-          echo "</ul>" >> _site/versions.html
-          echo "</body></html>" >> _site/versions.html
-        else
-          echo "Building latest version only"
-        fi"Building latest version only"
-        fi
+          fi
+        done
+        echo "</ul>" >> _site/versions.html
+        echo "</body></html>" >> _site/versions.html
         
-        # Показываем что создали
+        # Показываем итоговую структуру
         echo "Final site structure:"
-        find _site -type f | sort
-        echo "Files in _site/:"
-        ls -la _site/
+        find _site -type d | sort
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3

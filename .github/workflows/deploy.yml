@@ -19,56 +19,61 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Полная история для тегов
+        fetch-depth: 0
       
     - name: Setup Pages
       uses: actions/configure-pages@v4
       
-    - name: Build site with versions
+    - name: Build site with version history
       run: |
         # Создаем основную папку
         mkdir -p _site
         
-        # Копируем файлы в корень (latest версия)
+        # Копируем ТЕКУЩИЕ файлы в корень (latest версия)
         cp -r ru/ en/ index.html _site/
         
-        # Определяем версию тега
-        if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-          RELEASE_TAG=${GITHUB_REF#refs/tags/}
-          echo "Building versioned site: $RELEASE_TAG"
-          
-          # Убираем букву 'v' из имени папки
-          VERSION_NUMBER=${RELEASE_TAG#v}  # Убираем 'v' из начала
-          echo "Creating folder: v$VERSION_NUMBER"
-          
-          # Создаем папку для этой версии
-          mkdir -p _site/v$VERSION_NUMBER
-          
-          # Копируем все файлы в версионную папку
-          cp -r ru/ en/ index.html _site/v$VERSION_NUMBER/
-          
-          # Создаем страницу со списком версий
-          echo "<!DOCTYPE html>" > _site/versions.html
-          echo "<html><head><title>Available Versions</title></head><body>" >> _site/versions.html
-          echo "<h1>Available Website Versions</h1>" >> _site/versions.html
-          echo "<ul>" >> _site/versions.html
-          echo "<li><a href='/'>Latest Version</a></li>" >> _site/versions.html
-          git tag -l | while read tag; do
-            VERSION=${tag#v}
-            echo "<li><a href='/v$VERSION/'>Version $tag</a></li>" >> _site/versions.html
-          done
-          echo "</ul>" >> _site/versions.html
-          echo "</body></html>" >> _site/versions.html
-        else
-          echo "Building latest version only"
-        fi"Building latest version only"
-        fi
+        # Получаем список всех тегов
+        echo "Available tags:"
+        git tag -l
         
-        # Показываем что создали
+        # Создаем версии используя ТЕКУЩИЕ файлы
+        echo "Creating version history..."
+        git tag -l | while read tag; do
+          if [[ "$tag" == v* ]]; then
+            VERSION_NUMBER=${tag#v}
+            echo "Creating version folder: v$VERSION_NUMBER"
+            
+            # Создаем папку для этой версии
+            mkdir -p _site/v$VERSION_NUMBER
+            
+            # Копируем ТЕКУЩИЕ файлы в версионную папку
+            cp -r ru/ en/ index.html _site/v$VERSION_NUMBER/
+            
+            echo "Version v$VERSION_NUMBER created with current files"
+          fi
+        done
+        
+        # Создаем страницу со списком ВСЕХ версий
+        echo "<!DOCTYPE html>" > _site/versions.html
+        echo "<html><head><title>All Website Versions</title><meta charset='UTF-8'><style>body{font-family:Arial;margin:40px}ul{list-style:none;padding:0}li{margin:15px 0}a{text-decoration:none;color:#0366d6;font-weight:bold}.version-list{background:#f5f5f5;padding:20px;border-radius:5px}</style></head><body>" >> _site/versions.html
+        echo "<h1>Все доступные версии сайта</h1>" >> _site/versions.html
+        echo "<div class='version-list'>" >> _site/versions.html
+        echo "<ul>" >> _site/versions.html
+        echo "<li><a href='/'>Последняя версия (актуальная)</a></li>" >> _site/versions.html
+        git tag -l | while read tag; do
+          if [[ "$tag" == v* ]]; then
+            VERSION=${tag#v}
+            echo "<li><a href='/v$VERSION/'>Версия $tag</a></li>" >> _site/versions.html
+          fi
+        done
+        echo "</ul>" >> _site/versions.html
+        echo "</div>" >> _site/versions.html
+        echo "<p><em>Все версии содержат актуальную версию контента, но доступны по разным URL</em></p>" >> _site/versions.html
+        echo "</body></html>" >> _site/versions.html
+        
+        # Показываем итоговую структуру
         echo "Final site structure:"
-        find _site -type f | sort
-        echo "Files in _site/:"
-        ls -la _site/
+        find _site -type d | sort
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
